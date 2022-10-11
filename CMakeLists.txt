@@ -109,15 +109,29 @@ message(STATUS "${BITS}-bit build (${CPU_TYPE})")
 ###############################################################################
 # INSTALL DIRECTORIES
 ###############################################################################
+IF(${UNIX})
+    set(MYGE_TARGET_PLATFORM "Linux")
+ELSEIF(${WIN32})
+    set(MYGE_TARGET_PLATFORM "Windows")
+ENDIF(${UNIX})
+
+set(MYGE_EXTERNAL_ROOT ${PROJECT_BINARY_DIR}/../../${MYGE_TARGET_PLATFORM})
 
 if(WIN32)
+#  if(MSVC)
+#    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${CMAKE_PROJECT_NAME}")
+#  else()
+#    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${CMAKE_PROJECT_NAME}-gcc")
+#  endif()
+#  if(BITS EQUAL 64)
+#    set(CMAKE_INSTALL_DEFAULT_PREFIX "${CMAKE_INSTALL_DEFAULT_PREFIX}64")
+#  endif()
   if(MSVC)
-    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${CMAKE_PROJECT_NAME}")
-  else()
-    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${CMAKE_PROJECT_NAME}-gcc")
-  endif()
-  if(BITS EQUAL 64)
-    set(CMAKE_INSTALL_DEFAULT_PREFIX "${CMAKE_INSTALL_DEFAULT_PREFIX}64")
+    set(CMAKE_INSTALL_DEFAULT_PREFIX ${MYGE_EXTERNAL_ROOT})
+    set(CMAKE_INSTALL_INCLUDEDIR ${MYGE_EXTERNAL_ROOT}/include/libjpeg_turbo)
+    set(CMAKE_INSTALL_LIBDIR ${MYGE_EXTERNAL_ROOT}/lib)
+    set(CMAKE_INSTALL_BINDIR ${MYGE_EXTERNAL_ROOT}/bin)
+    set(CMAKE_INSTALL_SHAREDIR ${MYGE_EXTERNAL_ROOT}/share)
   endif()
 else()
   if(NOT CMAKE_INSTALL_DEFAULT_PREFIX)
@@ -181,7 +195,7 @@ macro(boolean_number var)
   endif()
 endmacro()
 
-option(ENABLE_SHARED "Build shared libraries" TRUE)
+option(ENABLE_SHARED "Build shared libraries" FALSE)
 boolean_number(ENABLE_SHARED)
 option(ENABLE_STATIC "Build static libraries" TRUE)
 boolean_number(ENABLE_STATIC)
@@ -1431,6 +1445,7 @@ if(WITH_TURBOJPEG)
   if(ENABLE_SHARED)
     install(TARGETS turbojpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      # TODO
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -1444,8 +1459,13 @@ if(WITH_TURBOJPEG)
   endif()
   if(ENABLE_STATIC)
     install(TARGETS turbojpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
-      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    install(TARGETS turbojpeg-static
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/Debug
+      CONFIGURATIONS Debug)
+    install(TARGETS turbojpeg-static
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/Release
+      CONFIGURATIONS Release)
     if(NOT ENABLE_SHARED)
       if(MSVC_IDE OR XCODE)
         set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
@@ -1462,8 +1482,13 @@ endif()
 
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(TARGETS jpeg-static
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/Debug
+    CONFIGURATIONS Debug)
+  install(TARGETS jpeg-static
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/Release
+    CONFIGURATIONS Release)
   if(NOT ENABLE_SHARED)
     if(MSVC_IDE OR XCODE)
       set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
@@ -1493,6 +1518,7 @@ if(WITH_JAVA)
     DESTINATION ${CMAKE_INSTALL_DOCDIR})
 endif()
 
+# TODO: IF UNIX
 if(UNIX OR MINGW)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cjpeg.1
     ${CMAKE_CURRENT_SOURCE_DIR}/djpeg.1 ${CMAKE_CURRENT_SOURCE_DIR}/jpegtran.1
@@ -1501,18 +1527,18 @@ if(UNIX OR MINGW)
     DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 endif()
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libjpeg.pc
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+  DESTINATION ${CMAKE_INSTALL_SHAREDIR}/pkgconfig)
 if(WITH_TURBOJPEG)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libturbojpeg.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+    DESTINATION ${CMAKE_INSTALL_SHAREDIR}/pkgconfig)
 endif()
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}Config.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}ConfigVersion.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
+  DESTINATION ${CMAKE_INSTALL_SHAREDIR}/cmake/${CMAKE_PROJECT_NAME})
 install(EXPORT ${CMAKE_PROJECT_NAME}Targets
   NAMESPACE ${CMAKE_PROJECT_NAME}::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
+  DESTINATION ${CMAKE_INSTALL_SHAREDIR}/cmake/${CMAKE_PROJECT_NAME})
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jconfig.h
   ${CMAKE_CURRENT_SOURCE_DIR}/jerror.h ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h
@@ -1525,3 +1551,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.i
   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
+
+# TODO: remove the two files in wrong path (in a very sumb way)
+# file(REMOVE ${CMAKE_INSTALL_LIBDIR}/turbojpeg-static.lib ${CMAKE_INSTALL_LIBDIR}/jpeg-static.lib)
