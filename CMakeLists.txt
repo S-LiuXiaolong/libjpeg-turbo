@@ -1438,14 +1438,13 @@ endif()
 ###############################################################################
 # INSTALLATION
 ###############################################################################
-
+# 
 set(EXE ${CMAKE_EXECUTABLE_SUFFIX})
 
 if(WITH_TURBOJPEG)
   if(ENABLE_SHARED)
     install(TARGETS turbojpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-      # TODO
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -1473,6 +1472,8 @@ if(WITH_TURBOJPEG)
       install(PROGRAMS ${DIR}/tjbench-static${EXE}
         DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME tjbench${EXE})
     endif()
+    install(FILES ${PROJECT_BINARY_DIR}/Debug/turbojpeg-static.pdb
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/Debug)
   endif()
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -1498,6 +1499,8 @@ if(ENABLE_STATIC)
     install(PROGRAMS ${DIR}/jpegtran-static${EXE}
       DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME jpegtran${EXE})
   endif()
+  install(FILES ${PROJECT_BINARY_DIR}/Debug/jpeg-static.pdb
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/Debug)
 endif()
 
 install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
